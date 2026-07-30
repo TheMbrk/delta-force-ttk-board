@@ -1,0 +1,499 @@
+<title>Delta Force TTK Board</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#0f151a; --panel:#151e25; --panel-2:#111920; --line:#25333c;
+    --text:#dbe3e8; --muted:#7d8d97; --faint:#556069;
+    --amber:#f2a63b; --hot:#ffce6b; --steel:#5b6b74;
+    --ice:#54c0d2; --hazard:#cf5a44; --good:#8fc95a;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 30px rgba(0,0,0,.45);
+    --radius:10px;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --ground:#e6e8ea; --panel:#ffffff; --panel-2:#f2f4f5; --line:#d3d9dd;
+      --text:#18222a; --muted:#5c6a73; --faint:#8a97a0;
+      --amber:#b9761a; --hot:#d99a2c; --steel:#93a1a9;
+      --ice:#1f8ea0; --hazard:#b0432f; --good:#5d8f2a;
+      --shadow:0 1px 0 rgba(255,255,255,.6), 0 10px 30px rgba(20,30,40,.12);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0f151a; --panel:#151e25; --panel-2:#111920; --line:#25333c;
+    --text:#dbe3e8; --muted:#7d8d97; --faint:#556069;
+    --amber:#f2a63b; --hot:#ffce6b; --steel:#5b6b74;
+    --ice:#54c0d2; --hazard:#cf5a44; --good:#8fc95a;
+    --shadow:0 1px 0 rgba(255,255,255,.03), 0 8px 30px rgba(0,0,0,.45);
+  }
+  :root[data-theme="light"]{
+    --ground:#e6e8ea; --panel:#ffffff; --panel-2:#f2f4f5; --line:#d3d9dd;
+    --text:#18222a; --muted:#5c6a73; --faint:#8a97a0;
+    --amber:#b9761a; --hot:#d99a2c; --steel:#93a1a9;
+    --ice:#1f8ea0; --hazard:#b0432f; --good:#5d8f2a;
+    --shadow:0 1px 0 rgba(255,255,255,.6), 0 10px 30px rgba(20,30,40,.12);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .wrap{
+    font-family:ui-monospace,"Cascadia Mono","JetBrains Mono","Roboto Mono",Consolas,Menlo,monospace;
+    background:
+      radial-gradient(120% 60% at 50% -10%, color-mix(in srgb, var(--amber) 7%, transparent), transparent 60%),
+      var(--ground);
+    color:var(--text);
+    min-height:100vh;
+    padding:18px 14px 46px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .board{max-width:600px;margin:0 auto}
+  .mono-num{font-variant-numeric:tabular-nums}
+
+  /* ---- header ---- */
+  header{
+    display:flex;align-items:center;gap:10px;
+    border:1px solid var(--line);border-radius:var(--radius);
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    padding:12px 14px;box-shadow:var(--shadow);
+  }
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--good);
+    box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 70%,transparent);
+    animation:pulse 2.4s ease-out infinite;flex:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--good) 55%,transparent)}
+    70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+  @media (prefers-reduced-motion:reduce){.dot{animation:none}}
+  .htxt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+  .htitle{font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;line-height:1.1}
+  .hsub{font-size:10.5px;color:var(--muted);letter-spacing:.09em;text-transform:uppercase;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hsub b{color:var(--amber);font-weight:700}
+
+  /* ---- hero ---- */
+  .hero{
+    margin-top:12px;border:1px solid var(--line);border-radius:var(--radius);
+    background:
+      linear-gradient(180deg, color-mix(in srgb,var(--amber) 10%,var(--panel)), var(--panel-2));
+    padding:15px 16px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  .hero::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:repeating-linear-gradient(90deg,transparent 0 6px,color-mix(in srgb,var(--line) 30%,transparent) 6px 7px);
+    opacity:.25;mix-blend-mode:overlay}
+  .hlabel{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);font-weight:700}
+  .hrow{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-top:6px}
+  .hname{font-size:30px;font-weight:800;letter-spacing:.02em;line-height:1;text-wrap:balance}
+  .hmeta{font-size:11px;color:var(--muted);margin-top:7px;letter-spacing:.04em}
+  .hmeta b{color:var(--text)}
+  .hbig{text-align:right;flex:none}
+  .hbig .n{font-size:38px;font-weight:800;line-height:.9;color:var(--hot)}
+  .hbig .u{font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+
+  /* ---- controls ---- */
+  .controls{margin-top:14px;display:flex;flex-direction:column;gap:10px}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin}
+  .chips::-webkit-scrollbar{height:5px}
+  .chips::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
+  .chip{flex:none;font-family:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);background:var(--panel);border:1px solid var(--line);
+    padding:7px 12px;border-radius:999px;cursor:pointer;transition:.14s;white-space:nowrap;font-weight:600}
+  .chip:hover{color:var(--text);border-color:color-mix(in srgb,var(--amber) 40%,var(--line))}
+  .chip[aria-pressed="true"]{color:var(--ground);background:var(--amber);border-color:var(--amber)}
+  :root[data-theme="light"] .chip[aria-pressed="true"]{color:#fff}
+  @media (prefers-color-scheme:light){.chip[aria-pressed="true"]{color:#fff}}
+
+  .row2{display:flex;gap:9px}
+  .search{flex:1;position:relative}
+  .search input{width:100%;font-family:inherit;font-size:13px;color:var(--text);
+    background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px 9px 30px;letter-spacing:.03em}
+  .search input::placeholder{color:var(--faint)}
+  .search input:focus{outline:none;border-color:var(--amber);box-shadow:0 0 0 2px color-mix(in srgb,var(--amber) 25%,transparent)}
+  .search svg{position:absolute;left:9px;top:50%;transform:translateY(-50%);width:14px;height:14px;stroke:var(--faint)}
+  .toggle{display:flex;background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;flex:none}
+  .toggle button{font-family:inherit;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--muted);background:transparent;border:none;padding:0 12px;cursor:pointer;transition:.14s}
+  .toggle button[aria-pressed="true"]{background:color-mix(in srgb,var(--amber) 18%,transparent);color:var(--amber)}
+  .toggle button:focus-visible{outline:2px solid var(--amber);outline-offset:-2px}
+
+  /* ---- list ---- */
+  .listhead{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 8px}
+  .listhead .lbl{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  #count{color:var(--amber)}
+  ol.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .item{display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;
+    border:1px solid var(--line);border-radius:8px;background:var(--panel);padding:10px 12px;box-shadow:var(--shadow)}
+  .item.top3{border-color:color-mix(in srgb,var(--amber) 45%,var(--line))}
+  .rank{font-size:13px;font-weight:800;color:var(--faint);text-align:center}
+  .item.top3 .rank{color:var(--amber)}
+  .mid{min-width:0}
+  .name{font-size:14.5px;font-weight:700;letter-spacing:.01em;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .tag{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    border:1px solid var(--line);border-radius:4px;padding:2px 5px;background:var(--panel-2)}
+  .flag{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ice);border:1px solid color-mix(in srgb,var(--ice) 40%,var(--line));border-radius:4px;padding:2px 5px}
+  .flag.warn{color:var(--hazard);border-color:color-mix(in srgb,var(--hazard) 40%,var(--line))}
+  .bar{margin-top:7px;height:6px;border-radius:3px;background:var(--panel-2);overflow:hidden;position:relative}
+  .bar > i{display:block;height:100%;border-radius:3px;transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .sub{font-size:10.5px;color:var(--muted);margin-top:5px;letter-spacing:.03em;display:flex;gap:10px;flex-wrap:wrap}
+  .sub b{color:var(--text);font-weight:600}
+  .val{text-align:right;flex:none}
+  .val .n{font-size:19px;font-weight:800;line-height:1}
+  .val .u{font-size:9px;color:var(--faint);letter-spacing:.12em;text-transform:uppercase}
+  .val.oneshot .n{font-size:14px;color:var(--ice)}
+  .empty{text-align:center;color:var(--muted);font-size:13px;padding:30px 0;letter-spacing:.04em}
+
+  /* ---- footer ---- */
+  .note{margin-top:20px;border:1px solid var(--line);border-radius:var(--radius);
+    background:var(--panel-2);padding:14px 15px;font-size:11.5px;line-height:1.65;color:var(--muted);letter-spacing:.01em}
+  .note h3{margin:0 0 7px;font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);font-weight:700}
+  .note b{color:var(--text);font-weight:600}
+  .note + .note{margin-top:9px}
+  .credit{margin-top:18px;text-align:center;font-size:11px;color:var(--faint);letter-spacing:.06em}
+  .credit b{color:var(--amber);letter-spacing:.05em}
+  .credit .src{display:block;margin-top:4px;font-size:10px;text-transform:uppercase;letter-spacing:.12em}
+
+  /* ---- mode + armor panel ---- */
+  .toggle.mode{width:100%}
+  .toggle.mode button{flex:1;padding:9px 0}
+  .armorpanel{display:flex;flex-direction:column;gap:9px;border:1px solid var(--line);border-radius:8px;
+    background:var(--panel-2);padding:11px 12px}
+  .armorpanel[hidden]{display:none}
+  .segwrap{display:flex;align-items:center;gap:10px}
+  .seglbl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);width:84px;flex:none}
+  .seg{display:flex;gap:5px;flex:1}
+  .seg button{flex:1;font-family:inherit;font-size:12px;font-weight:700;letter-spacing:.03em;
+    color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:7px 0;cursor:pointer;transition:.14s}
+  .seg button:hover{color:var(--text)}
+  .seg button[aria-pressed="true"]{background:var(--amber);color:var(--ground);border-color:var(--amber)}
+  :root[data-theme="light"] .seg button[aria-pressed="true"]{color:#fff}
+  @media (prefers-color-scheme:light){.seg button[aria-pressed="true"]{color:#fff}}
+  .seg button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+  .delta{font-size:11.5px;letter-spacing:.02em;text-align:center;padding:9px;border-radius:6px;font-weight:600;
+    background:var(--panel);border:1px solid var(--line);line-height:1.4}
+  .delta b{font-weight:800}
+  .delta.pen{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+  .delta.half{color:var(--amber);border-color:color-mix(in srgb,var(--amber) 40%,var(--line))}
+  .delta.immune{color:var(--hazard);border-color:color-mix(in srgb,var(--hazard) 45%,var(--line));
+    background:color-mix(in srgb,var(--hazard) 10%,var(--panel))}
+  .flag.immune{color:var(--hazard);border-color:color-mix(in srgb,var(--hazard) 45%,var(--line))}
+  .flag.thru{color:var(--good);border-color:color-mix(in srgb,var(--good) 40%,var(--line))}
+  .val.immune .n{font-size:12px;color:var(--hazard)}
+  .val.immune .u{color:var(--hazard)}
+  .sub .bare{color:var(--faint)}
+  .hero.immune{background:linear-gradient(180deg,color-mix(in srgb,var(--hazard) 14%,var(--panel)),var(--panel-2))}
+  .hero.immune .hlabel{color:var(--hazard)}
+  .hero.immune .hbig .n{color:var(--hazard)}
+  /* mechanics table */
+  .mtable{width:100%;border-collapse:collapse;margin-top:9px;font-size:11px;font-variant-numeric:tabular-nums}
+  .mtable th,.mtable td{text-align:left;padding:5px 7px;border-bottom:1px solid var(--line)}
+  .mtable th{color:var(--faint);text-transform:uppercase;letter-spacing:.07em;font-size:9px;font-weight:700}
+  .mtable td b{color:var(--text)}
+  .mtable tr:last-child td{border-bottom:none}
+  .mtable .k{color:var(--hazard);font-weight:800}
+  .mtable .g{color:var(--good);font-weight:800}
+  .note .flag{display:inline-block;transform:translateY(-1px)}
+</style>
+
+<div class="wrap">
+  <div class="board">
+    <header>
+      <span class="dot" aria-hidden="true"></span>
+      <div class="htxt">
+        <div class="htitle">TTK&nbsp;Board</div>
+        <div class="hsub">Delta Force · <b>Season&nbsp;10</b> · patch 2026&#8209;07&#8209;30 · 66&nbsp;weapons</div>
+      </div>
+    </header>
+
+    <section class="hero" id="hero" aria-live="polite"></section>
+
+    <div class="controls">
+      <div class="chips" id="chips" role="group" aria-label="Filter by weapon class"></div>
+      <div class="row2">
+        <label class="search">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input id="q" type="search" placeholder="Search weapon…" autocomplete="off" aria-label="Search weapon">
+        </label>
+      </div>
+      <div class="toggle mode" role="group" aria-label="Target mode">
+        <button id="mChest" aria-pressed="true">Chest</button>
+        <button id="mLeg" aria-pressed="false">Leg</button>
+        <button id="mArmor" aria-pressed="false">Armored</button>
+      </div>
+      <div class="armorpanel" id="armorpanel" hidden>
+        <div class="segwrap">
+          <span class="seglbl">Your ammo</span>
+          <div class="seg" id="segAmmo" role="group" aria-label="Ammo grade"></div>
+        </div>
+        <div class="segwrap">
+          <span class="seglbl">Their armor</span>
+          <div class="seg" id="segArmor" role="group" aria-label="Armor level"></div>
+        </div>
+        <div class="delta" id="delta" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div class="listhead">
+      <span class="lbl">Rank · Fastest kill first</span>
+      <span class="lbl"><span id="count">0</span> shown</span>
+    </div>
+    <ol class="list" id="list"></ol>
+
+    <div class="note">
+      <h3>How TTK is figured</h3>
+      Time from first bullet to the kill, target at <b>100 HP</b>, holding the trigger (no reload, no
+      travel time). <b>Chest</b> = full body damage · <b>Leg</b> = the game's own limb-hit time from the
+      source · <b>Armored</b> = damage through a plate (below). Fewer shots + faster fire rate = lower TTK.
+    </div>
+    <div class="note">
+      <h3>Ammo vs armor: the delta rule</h3>
+      What gets through a plate is decided by <b>your ammo grade minus their armor level</b> — not by raw
+      damage. This is straight from the game's combat simulator:
+      <table class="mtable">
+        <thead><tr><th>Δ = ammo − armor</th><th>Damage through</th><th>What it feels like</th></tr></thead>
+        <tbody>
+          <tr><td><b>+2 or more</b></td><td class="g">100%</td><td>plate does nothing</td></tr>
+          <tr><td><b>+1</b></td><td>75%</td><td>"why's he still up"</td></tr>
+          <tr><td><b>0</b> (even)</td><td>50%</td><td>fair trade</td></tr>
+          <tr><td><b>−1 or less</b></td><td class="k">0%</td><td>immune till the plate breaks</td></tr>
+        </tbody>
+      </table>
+      One level under their ammo halves your protection; one level over makes you immune. Switch to
+      <b>Armored</b> above and set both to see it per gun.
+    </div>
+    <div class="note">
+      <h3>Why "armored" is the worst case</h3>
+      The armored TTK assumes the plate is at <b>full durability the whole time</b>. In a real fight your
+      shots chip the plate down (that's <b>armor damage</b>), so the true kill lands somewhere between the
+      armored number and the bare one — which is why each gun shows its bare TTK too. When you're
+      <b>immune</b> (Δ ≤ −1), nothing kills through the intact plate: strip it first — the list re-ranks by
+      how fast each gun breaks armor. <b>Shotguns</b> read per-pellet at the source, so their model TTK is
+      overstated up close.
+    </div>
+
+    <div class="credit">
+      Built by <b>@mctubzx</b> · save it, screenshot it, run the meta
+      <span class="src">Data: kkrb.net · pulled 31 Jul 2026 · armor model from the game's combat simulator</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const DATA = [{"name":"M82","type":"Sniper Rifle","fd":100,"ad":20,"rpm":100,"stk":1,"ttk":0,"oneshot":true,"range":200,"legttk":1800,"price":215139},{"name":"AWM","type":"Sniper Rifle","fd":100,"ad":10,"rpm":35,"stk":1,"ttk":0,"oneshot":true,"range":200,"legttk":5143,"price":838419},{"name":"M250","type":"LMG","fd":55,"ad":53,"rpm":550,"stk":2,"ttk":109,"oneshot":false,"range":40,"legttk":1045,"price":336639},{"name":"ASh-12","type":"Assault Rifle","fd":56,"ad":55,"rpm":500,"stk":2,"ttk":120,"oneshot":false,"range":55,"legttk":600,"price":229336},{"name":"MCX LT","type":"Assault Rifle","fd":34,"ad":29,"rpm":840,"stk":3,"ttk":143,"oneshot":false,"range":30,"legttk":571,"price":97834},{"name":"MK4","type":"SMG","fd":34,"ad":30,"rpm":793,"stk":3,"ttk":151,"oneshot":false,"range":20,"legttk":605,"price":127203},{"name":"K437","type":"Assault Rifle","fd":36,"ad":32,"rpm":780,"stk":3,"ttk":154,"oneshot":false,"range":35,"legttk":538,"price":144219},{"name":"QCQ171","type":"SMG","fd":36,"ad":33,"rpm":763,"stk":3,"ttk":157,"oneshot":false,"range":20,"legttk":550,"price":163563},{"name":"SR-3M","type":"SMG","fd":36,"ad":48,"rpm":747,"stk":3,"ttk":161,"oneshot":false,"range":15,"legttk":562,"price":118113},{"name":"Vector","type":"SMG","fd":32,"ad":28,"rpm":1091,"stk":4,"ttk":165,"oneshot":false,"range":20,"legttk":440,"price":229450},{"name":"M14","type":"Marksman Rifle","fd":39,"ad":41,"rpm":727,"stk":3,"ttk":165,"oneshot":false,"range":40,"legttk":578,"price":174050},{"name":"SR-25","type":"Marksman Rifle","fd":50,"ad":55,"rpm":364,"stk":2,"ttk":165,"oneshot":false,"range":60,"legttk":824,"price":275828},{"name":"CI-19","type":"Assault Rifle","fd":35,"ad":38,"rpm":706,"stk":3,"ttk":170,"oneshot":false,"range":35,"legttk":680,"price":129192},{"name":"Warrior","type":"SMG","fd":36,"ad":35,"rpm":700,"stk":3,"ttk":171,"oneshot":false,"range":20,"legttk":600,"price":53285},{"name":"PKM","type":"LMG","fd":45,"ad":42,"rpm":669,"stk":3,"ttk":179,"oneshot":false,"range":40,"legttk":838,"price":100313},{"name":"AS Val","type":"Assault Rifle","fd":28,"ad":44,"rpm":972,"stk":4,"ttk":185,"oneshot":false,"range":21,"legttk":556,"price":272431},{"name":"M7","type":"Assault Rifle","fd":37,"ad":40,"rpm":649,"stk":3,"ttk":185,"oneshot":false,"range":50,"legttk":647,"price":261809},{"name":"MP7","type":"SMG","fd":32,"ad":28,"rpm":950,"stk":4,"ttk":189,"oneshot":false,"range":20,"legttk":505,"price":224235},{"name":"PTR-32","type":"Assault Rifle","fd":36,"ad":37,"rpm":632,"stk":3,"ttk":190,"oneshot":false,"range":40,"legttk":665,"price":53528},{"name":"MK47","type":"Assault Rifle","fd":42,"ad":46,"rpm":625,"stk":3,"ttk":192,"oneshot":false,"range":30,"legttk":576,"price":229336},{"name":"SMG-45","type":"SMG","fd":35,"ad":40,"rpm":605,"stk":3,"ttk":198,"oneshot":false,"range":27,"legttk":793,"price":65531},{"name":"SG552","type":"Assault Rifle","fd":25,"ad":34,"rpm":906,"stk":4,"ttk":199,"oneshot":false,"range":35,"legttk":662,"price":46884},{"name":"AR57","type":"Assault Rifle","fd":30,"ad":31,"rpm":900,"stk":4,"ttk":200,"oneshot":false,"range":35,"legttk":600,"price":186656},{"name":"P90","type":"SMG","fd":32,"ad":35,"rpm":898,"stk":4,"ttk":200,"oneshot":false,"range":20,"legttk":535,"price":85355},{"name":"AKM","type":"Assault Rifle","fd":40,"ad":42,"rpm":600,"stk":3,"ttk":200,"oneshot":false,"range":40,"legttk":700,"price":120177},{"name":"SVCH","type":"Marksman Rifle","fd":47,"ad":46,"rpm":600,"stk":3,"ttk":200,"oneshot":false,"range":65,"legttk":600,"price":104063},{"name":"SVD","type":"Marksman Rifle","fd":56,"ad":56,"rpm":300,"stk":2,"ttk":200,"oneshot":false,"range":70,"legttk":1000,"price":129600},{"name":"PSG-1","type":"Marksman Rifle","fd":50,"ad":55,"rpm":300,"stk":2,"ttk":200,"oneshot":false,"range":90,"legttk":1000,"price":129600},{"name":"Mini-14","type":"Marksman Rifle","fd":34,"ad":38,"rpm":590,"stk":3,"ttk":203,"oneshot":false,"range":90,"legttk":814,"price":39668},{"name":"G18","type":"Pistol","fd":23,"ad":16,"rpm":1172,"stk":5,"ttk":205,"oneshot":false,"range":10,"legttk":563,"price":19112},{"name":"K416","type":"Assault Rifle","fd":31,"ad":35,"rpm":880,"stk":4,"ttk":205,"oneshot":false,"range":27,"legttk":614,"price":159204},{"name":"SCAR-H","type":"Assault Rifle","fd":41,"ad":40,"rpm":585,"stk":3,"ttk":205,"oneshot":false,"range":40,"legttk":718,"price":123400},{"name":"M249","type":"LMG","fd":30,"ad":38,"rpm":858,"stk":4,"ttk":210,"oneshot":false,"range":40,"legttk":1079,"price":70068},{"name":"RM277","type":"Assault Rifle","fd":41,"ad":42,"rpm":550,"stk":3,"ttk":218,"oneshot":false,"range":55,"legttk":764,"price":130065},{"name":"MP5","type":"SMG","fd":30,"ad":32,"rpm":820,"stk":4,"ttk":220,"oneshot":false,"range":20,"legttk":659,"price":53832},{"name":"M4A1","type":"Assault Rifle","fd":31,"ad":33,"rpm":800,"stk":4,"ttk":225,"oneshot":false,"range":40,"legttk":675,"price":114478},{"name":"G3","type":"Assault Rifle","fd":39,"ad":42,"rpm":533,"stk":3,"ttk":225,"oneshot":false,"range":55,"legttk":788,"price":57837},{"name":"AKS-74U","type":"Assault Rifle","fd":34,"ad":36,"rpm":533,"stk":3,"ttk":225,"oneshot":false,"range":40,"legttk":901,"price":12058},{"name":"QJB201","type":"LMG","fd":32,"ad":38,"rpm":785,"stk":4,"ttk":229,"oneshot":false,"range":40,"legttk":1011,"price":127673},{"name":"SR9","type":"Marksman Rifle","fd":50,"ad":55,"rpm":261,"stk":2,"ttk":230,"oneshot":false,"range":90,"legttk":1149,"price":10800},{"name":"UZI","type":"SMG","fd":28,"ad":35,"rpm":780,"stk":4,"ttk":231,"oneshot":false,"range":20,"legttk":1232,"price":12055},{"name":"SKS","type":"Marksman Rifle","fd":48,"ad":49,"rpm":510,"stk":3,"ttk":235,"oneshot":false,"range":55,"legttk":706,"price":49500},{"name":"93R","type":"Pistol","fd":34,"ad":32,"rpm":508,"stk":3,"ttk":236,"oneshot":false,"range":22,"legttk":945,"price":18635},{"name":"KC17","type":"Assault Rifle","fd":31,"ad":48,"rpm":740,"stk":4,"ttk":243,"oneshot":false,"range":55,"legttk":730,"price":204311},{"name":"AK-12","type":"Assault Rifle","fd":30,"ad":42,"rpm":735,"stk":4,"ttk":245,"oneshot":false,"range":40,"legttk":735,"price":114522},{"name":"VSS","type":"Marksman Rifle","fd":40,"ad":48,"rpm":480,"stk":3,"ttk":250,"oneshot":false,"range":120,"legttk":875,"price":47781},{"name":"AUG","type":"Assault Rifle","fd":32,"ad":35,"rpm":679,"stk":4,"ttk":265,"oneshot":false,"range":55,"legttk":707,"price":122314},{"name":"QBZ95-1","type":"Assault Rifle","fd":28,"ad":42,"rpm":679,"stk":4,"ttk":265,"oneshot":false,"range":55,"legttk":795,"price":43508},{"name":"PP-19 Bizon","type":"SMG","fd":32,"ad":35,"rpm":659,"stk":4,"ttk":273,"oneshot":false,"range":20,"legttk":728,"price":12101},{"name":"CAR-15","type":"Assault Rifle","fd":27,"ad":32,"rpm":632,"stk":4,"ttk":285,"oneshot":false,"range":40,"legttk":949,"price":12304},{"name":"Desert Eagle","type":"Pistol","fd":56,"ad":53,"rpm":207,"stk":2,"ttk":290,"oneshot":false,"range":15,"legttk":1449,"price":14590},{"name":"QSZ92G","type":"Pistol","fd":34,"ad":32,"rpm":375,"stk":3,"ttk":320,"oneshot":false,"range":27,"legttk":1280,"price":4800},{"name":"M1911","type":"Pistol","fd":40,"ad":30,"rpm":373,"stk":3,"ttk":322,"oneshot":false,"range":15,"legttk":1126,"price":17375},{"name":".357 Revolver","type":"Pistol","fd":56,"ad":39,"rpm":182,"stk":2,"ttk":330,"oneshot":false,"range":35,"legttk":2148,"price":14130},{"name":"Compound Bow","type":"Special","fd":90,"ad":65,"rpm":182,"stk":2,"ttk":330,"oneshot":false,"range":65,"legttk":989,"price":132000},{"name":"M16A4","type":"Assault Rifle","fd":33,"ad":39,"rpm":508,"stk":4,"ttk":354,"oneshot":false,"range":55,"legttk":945,"price":12282},{"name":"G17","type":"Pistol","fd":27,"ad":25,"rpm":462,"stk":4,"ttk":390,"oneshot":false,"range":27,"legttk":1299,"price":5000},{"name":"Lever-Action Rifle","type":"Marksman Rifle","fd":70,"ad":25,"rpm":100,"stk":2,"ttk":600,"oneshot":false,"range":30,"legttk":2400,"price":71415},{"name":"725 Double-Barrel","type":"Shotgun","fd":17,"ad":18,"rpm":375,"stk":6,"ttk":800,"oneshot":false,"range":15,"legttk":320,"price":31915},{"name":"R93","type":"Sniper Rifle","fd":61,"ad":58,"rpm":56,"stk":2,"ttk":1071,"oneshot":false,"range":150,"legttk":5357,"price":120000},{"name":"M700","type":"Sniper Rifle","fd":61,"ad":58,"rpm":48,"stk":2,"ttk":1250,"oneshot":false,"range":150,"legttk":6250,"price":120000},{"name":"SV-98","type":"Sniper Rifle","fd":60,"ad":58,"rpm":44,"stk":2,"ttk":1364,"oneshot":false,"range":150,"legttk":6818,"price":82055},{"name":"FS-12","type":"Shotgun","fd":14,"ad":16,"rpm":300,"stk":8,"ttk":1400,"oneshot":false,"range":12,"legttk":3600,"price":68040},{"name":"S12K","type":"Shotgun","fd":13,"ad":16,"rpm":300,"stk":8,"ttk":1400,"oneshot":false,"range":10,"legttk":600,"price":44715},{"name":"M1014","type":"Shotgun","fd":14,"ad":16,"rpm":261,"stk":8,"ttk":1609,"oneshot":false,"range":12,"legttk":690,"price":26588},{"name":"M870","type":"Shotgun","fd":17,"ad":16,"rpm":74,"stk":6,"ttk":4054,"oneshot":false,"range":12,"legttk":1622,"price":5000}];
+
+const CLASSES = ["All","Assault Rifle","SMG","LMG","Marksman Rifle","Sniper Rifle","Pistol","Shotgun"];
+const SHORT = {"Assault Rifle":"AR","SMG":"SMG","LMG":"LMG","Marksman Rifle":"DMR","Sniper Rifle":"SNIPER","Pistol":"PISTOL","Shotgun":"SHOTGUN","Special":"SPECIAL"};
+const SHOTGUNS = new Set(["Shotgun"]);
+const HP = 100;
+
+let mode = "chest";      // chest | leg | armor
+let filter = "All";
+let ammo = 5;            // ammo grade 3..6
+let armorLvl = 4;        // armor level 3..6
+
+// bare-mode fastest reference → stable bar lengths across filters
+const MINT = {
+  chest: Math.min(...DATA.filter(d=>!d.oneshot).map(d=>d.ttk)),
+  leg:   Math.min(...DATA.map(d=>d.legttk))
+};
+
+// --- validated delta rule (project/survivability.py, from the game's simulator) ---
+function mitigation(delta){
+  if(delta>=2) return 1;
+  if(delta===1) return 0.75;
+  if(delta===0) return 0.5;
+  return 0;                          // Δ ≤ −1 → immune while the plate holds
+}
+const curMit = () => mitigation(ammo - armorLvl);
+const armorDPS = d => d.ad * d.rpm / 60;
+
+function autoTTK(fleshPerShot, rpm){   // ms to down 100 HP
+  const stk = Math.ceil(HP / fleshPerShot);
+  return { stk, ttk: Math.round((stk-1)*60000/rpm) };
+}
+
+function lerp(a,b,t){return a+(b-a)*t}
+function hex(c){return [parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)]}
+const C_STEEL=hex("#5b6b74"), C_AMBER=hex("#f2a63b"), C_HOT=hex("#ffce6b");
+function ramp(frac){ // 0..1 → steel→amber→hot
+  let a,b,t;
+  if(frac<0.5){a=C_STEEL;b=C_AMBER;t=frac/0.5;} else {a=C_AMBER;b=C_HOT;t=(frac-0.5)/0.5;}
+  const r=Math.round(lerp(a[0],b[0],t)),g=Math.round(lerp(a[1],b[1],t)),bl=Math.round(lerp(a[2],b[2],t));
+  return `rgb(${r},${g},${bl})`;
+}
+function money(n){return "$"+n.toLocaleString("en-US")}
+const bareLabel = d => d.oneshot ? "1-shot" : d.ttk+"ms";
+
+// Per-gun display record for the active mode.
+function rec(d){
+  if(mode==="chest") return {immune:false, one:d.oneshot, ttk:d.ttk, stk:d.stk, sort:d.oneshot?-1:d.ttk};
+  if(mode==="leg")   return {immune:false, one:false, ttk:d.legttk, stk:null, sort:d.legttk};
+  const mit = curMit();
+  if(mit===0) return {immune:true, one:false, stripDPS:armorDPS(d), sort:-armorDPS(d)};
+  const {stk, ttk} = autoTTK(d.fd*mit, d.rpm);
+  return {immune:false, one:stk===1, ttk, stk, bare:bareLabel(d), sort:stk===1?-1:ttk};
+}
+
+// Reference for bar scaling in the current mode.
+function barRef(){
+  if(mode!=="armor") return {min:MINT[mode]};
+  const mit = curMit();
+  if(mit===0) return {max:Math.max(...DATA.map(armorDPS))};
+  const t = DATA.map(d=>autoTTK(d.fd*mit,d.rpm)).filter(x=>x.stk>1).map(x=>x.ttk);
+  return {min: t.length?Math.min(...t):1};
+}
+
+function render(){
+  const q = document.getElementById("q").value.trim().toLowerCase();
+  const armorImmune = mode==="armor" && curMit()===0;
+  let rows = DATA.filter(d => filter==="All" || d.type===filter)
+                 .filter(d => !q || d.name.toLowerCase().includes(q))
+                 .map(d => ({d, r:rec(d)}));
+  rows.sort((a,b)=> a.r.sort - b.r.sort || b.d.rpm - a.d.rpm);
+
+  drawHero(rows, armorImmune);
+  setListHead(armorImmune);
+
+  const list = document.getElementById("list");
+  document.getElementById("count").textContent = rows.length;
+  if(!rows.length){ list.innerHTML = `<li class="empty">No weapon matches that.</li>`; return; }
+
+  const ref = barRef();
+  list.innerHTML = rows.map(({d,r},i)=>{
+    const shotgun = SHOTGUNS.has(d.type);
+    let frac, barCol, flag="", valBlock, sub;
+
+    if(r.immune){
+      frac = Math.max(0.04, r.stripDPS/ref.max);
+      barCol = "var(--hazard)";
+      flag = `<span class="flag immune">can't pen</span>`;
+      valBlock = `<div class="val immune"><div class="n mono-num">${Math.round(r.stripDPS)}</div><div class="u">arm/s</div></div>`;
+      sub = `<span><b class="mono-num">${d.ad}</b> arm dmg</span><span><b class="mono-num">${d.rpm}</b> rpm</span><span><b class="mono-num">${d.range}</b>m</span>`;
+    } else if(r.one){
+      frac = 1; barCol = "var(--ice)";
+      flag = `<span class="flag">1&#8209;shot</span>`;
+      valBlock = `<div class="val oneshot"><div class="n">1 SHOT</div><div class="u">${mode==="chest"?"instant":"through"}</div></div>`;
+      sub = subLine(d,r);
+    } else {
+      frac = Math.max(0.04, Math.min(1, ref.min / r.ttk));
+      barCol = ramp(frac);
+      if(shotgun) flag = `<span class="flag warn">per&#8209;pellet</span>`;
+      valBlock = `<div class="val"><div class="n mono-num">${r.ttk}</div><div class="u">ms</div></div>`;
+      sub = subLine(d,r);
+    }
+    return `<li class="item ${i<3?'top3':''}">
+      <div class="rank mono-num">${i+1}</div>
+      <div class="mid">
+        <div class="name">${d.name} <span class="tag">${SHORT[d.type]||d.type}</span> ${flag}</div>
+        <div class="bar"><i style="width:${(frac*100).toFixed(1)}%;background:${barCol}"></i></div>
+        <div class="sub">${sub}</div>
+      </div>
+      ${valBlock}
+    </li>`;
+  }).join("");
+}
+
+function subLine(d,r){
+  if(mode==="leg")
+    return `<span><b class="mono-num">${d.rpm}</b> rpm</span><span><b class="mono-num">${d.range}</b>m</span><span><b class="mono-num">${money(d.price)}</b></span>`;
+  if(mode==="armor")
+    return `<span><b class="mono-num">${r.stk}</b> shots</span><span><b class="mono-num">${d.rpm}</b> rpm</span><span><b class="mono-num">${d.range}</b>m</span><span class="bare">bare <b class="mono-num">${r.bare}</b></span>`;
+  return `<span><b class="mono-num">${d.stk}</b> shots</span><span><b class="mono-num">${d.rpm}</b> rpm</span><span><b class="mono-num">${d.range}</b>m</span><span><b class="mono-num">${money(d.price)}</b></span>`;
+}
+
+function setListHead(immune){
+  const el = document.querySelector(".listhead .lbl");
+  el.textContent = mode==="chest" ? "Rank · Fastest kill first"
+    : mode==="leg" ? "Rank · Fastest leg kill"
+    : immune ? "Rank · Fastest to strip the plate"
+    : "Rank · Fastest through armor";
+}
+
+function drawHero(rows, immune){
+  const el = document.getElementById("hero");
+  if(!rows.length){ el.innerHTML=""; el.className="hero"; return; }
+
+  if(immune){
+    const {d,r} = rows[0];   // fastest stripper
+    el.className = "hero immune";
+    el.innerHTML = `
+      <div class="hlabel">No kill through L${armorLvl} — strip it first</div>
+      <div class="hrow">
+        <div>
+          <div class="hname">${d.name}</div>
+          <div class="hmeta">Fastest to break armor · <b>${SHORT[d.type]||d.type}</b> · <b class="mono-num">${d.ad}</b> arm dmg · <b class="mono-num">${d.rpm}</b> rpm</div>
+        </div>
+        <div class="hbig"><div class="n mono-num">${Math.round(r.stripDPS)}</div><div class="u">arm/s</div></div>
+      </div>`;
+    return;
+  }
+
+  const pick = rows.find(x=>!x.r.one && !SHOTGUNS.has(x.d.type)) || rows[0];
+  const {d,r} = pick;
+  const label = mode==="chest" ? "Fastest kill · chest"
+    : mode==="leg" ? "Fastest kill · leg"
+    : `Fastest through L${armorLvl} · G${ammo} ammo`;
+  const shots = mode==="leg" ? "" : `<b class="mono-num">${r.stk}</b> shots · `;
+  const tail = mode==="armor" ? ` · bare <b class="mono-num">${r.bare}</b>` : "";
+  el.className = "hero";
+  el.innerHTML = `
+    <div class="hlabel">${label}</div>
+    <div class="hrow">
+      <div>
+        <div class="hname">${d.name}</div>
+        <div class="hmeta"><b>${SHORT[d.type]||d.type}</b> · ${shots}<b class="mono-num">${d.rpm}</b> rpm · <b class="mono-num">${d.range}</b>m${tail}</div>
+      </div>
+      <div class="hbig"><div class="n mono-num">${r.ttk}</div><div class="u">ms</div></div>
+    </div>`;
+}
+
+function updateDelta(){
+  const el = document.getElementById("delta");
+  const dl = ammo - armorLvl, mit = mitigation(dl);
+  const sign = dl>0 ? "+"+dl : ""+dl;
+  const head = `G${ammo} vs L${armorLvl} → Δ ${sign} · `;
+  if(mit===0){ el.className="delta immune"; el.innerHTML = head+`<b>IMMUNE</b> — 0% through while the plate holds. Strip it first.`; }
+  else if(mit===1){ el.className="delta pen"; el.innerHTML = head+`<b>100%</b> through — the plate does nothing.`; }
+  else { el.className="delta half"; el.innerHTML = head+`<b>${mit*100}%</b> of your damage gets through.`; }
+}
+
+// build class chips
+const chipsEl = document.getElementById("chips");
+CLASSES.forEach(c=>{
+  const b=document.createElement("button");
+  b.className="chip"; b.textContent = c==="All"?"All":(SHORT[c]||c);
+  b.setAttribute("aria-pressed", c==="All"?"true":"false");
+  b.onclick=()=>{filter=c;[...chipsEl.children].forEach(x=>x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");render();};
+  chipsEl.appendChild(b);
+});
+
+// build ammo / armor segmented pickers
+function buildSeg(id, prefix, values, get, set){
+  const el = document.getElementById(id);
+  values.forEach(v=>{
+    const b=document.createElement("button");
+    b.textContent = prefix+v;
+    b.setAttribute("aria-pressed", get()===v ? "true":"false");
+    b.onclick=()=>{ set(v); [...el.children].forEach(x=>x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true"); updateDelta(); render(); };
+    el.appendChild(b);
+  });
+}
+buildSeg("segAmmo","G",[3,4,5,6],()=>ammo,v=>ammo=v);
+buildSeg("segArmor","L",[3,4,5,6],()=>armorLvl,v=>armorLvl=v);
+
+// mode toggle
+const mBtns = {chest:document.getElementById("mChest"), leg:document.getElementById("mLeg"), armor:document.getElementById("mArmor")};
+function setMode(m){
+  mode=m;
+  for(const k in mBtns) mBtns[k].setAttribute("aria-pressed", k===m?"true":"false");
+  document.getElementById("armorpanel").hidden = (m!=="armor");
+  render();
+}
+mBtns.chest.onclick=()=>setMode("chest");
+mBtns.leg.onclick=()=>setMode("leg");
+mBtns.armor.onclick=()=>setMode("armor");
+
+document.getElementById("q").addEventListener("input", render);
+
+updateDelta();
+render();
+</script>
